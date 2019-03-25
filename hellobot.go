@@ -8,11 +8,15 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"os"
 )
 
 func main(){
 	fmt.Println("Starting Server")
 
+	if args := os.Args; len(args) > 1 && args[1] == "-register"{
+		go registerWebhook()
+	}
 	//Create a new Mux Handler
 	m := mux.NewRouter()
 	//Listen to the base url and send a response
@@ -52,3 +56,4 @@ func CrcCheck(writer http.ResponseWriter, request *http.Request){
 	responseJson, _ := json.Marshal(response)
 	fmt.Fprintf(writer, string(responseJson))
 }
+
