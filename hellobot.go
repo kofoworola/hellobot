@@ -7,11 +7,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
+	"log"
 	"net/http"
 	"os"
 )
 
 func main(){
+	//Load env
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+		fmt.Println("Error loading .env file")
+	}
+
 	fmt.Println("Starting Server")
 
 	if args := os.Args; len(args) > 1 && args[1] == "-register"{
@@ -46,7 +55,7 @@ func CrcCheck(writer http.ResponseWriter, request *http.Request){
 	}
 
 	//Encrypt and encode in base 64 then return
-	h := hmac.New(sha256.New, []byte("kvAUFhTPGCSYIFOR77DEVozReKRxxmlFR4tkqr3I2hPSpuaZmIkvAUFhTPGCSYIFOR77DEVozReKRxxmlFR4tkqr3I2hPSpuaZmI"))
+	h := hmac.New(sha256.New, []byte(os.Getenv("CONSUMER_SECRET")))
 	h.Write([]byte(token[0]))
 	encoded := base64.StdEncoding.EncodeToString(h.Sum(nil))
 	//Generate response string map
