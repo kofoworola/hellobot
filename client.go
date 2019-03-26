@@ -10,6 +10,28 @@ import (
 	"os"
 )
 
+//Struct to parse webhook load
+type WebhookLoad struct {
+	UserId           string  `json:"for_user_id"`
+	TweetCreateEvent []Tweet `json:"tweet_create_events"`
+}
+
+//Struct to parse tweet
+type Tweet struct {
+	Id    int64
+	IdStr string `json:"id_str"`
+	User  User
+	Text  string
+}
+
+//Struct to parse user
+type User struct {
+	Id     int64
+	IdStr  string `json:"id_str"`
+	Name   string
+	Handle string `json:"screen_name"`
+}
+
 func CreateClient() *http.Client {
 	//Create oauth client with consumer keys and access token
 	config := oauth1.NewConfig(os.Getenv("CONSUMER_KEY"), os.Getenv("CONSUMER_SECRET"))
@@ -35,6 +57,7 @@ func registerWebhook(){
 	if err := json.Unmarshal([]byte(body), &data); err != nil {
 		panic(err)
 	}
+	fmt.Println(data)
 	fmt.Println("Webhook id of " + data["id"].(string) + " has been registered")
 	subscribeWebhook()
 }
@@ -53,4 +76,29 @@ func subscribeWebhook(){
 		fmt.Println("Could not subscribe the webhook. Response below:")
 		fmt.Println(string(body))
 	}
+}
+
+func SendTweet(tweet string, reply_id string) (*Tweet, error) {
+	fmt.Println("Sending tweet as reply to " + reply_id)
+	//Initialize tweet object to store response in
+	var responseTweet Tweet
+	//Add params
+	params := url.Values{}
+	params.Set("status",tweet)
+	params.Set("in_reply_to_status_id",reply_id)
+	//Grab client and post
+	client := CreateClient()
+	resp, err := client.PostForm("https://api.twitter.com/1.1/statuses/update.json",params)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	//Decode response and send out
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+	err = json.Unmarshal(body, &responseTweet)
+	if err != nil{
+		return  nil,err
+	}
+	return &responseTweet, nil
 }
