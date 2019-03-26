@@ -24,7 +24,7 @@ func registerWebhook(){
 	//Set parameters
 	path := "https://api.twitter.com/1.1/account_activity/all/" + os.Getenv("WEBHOOK_ENV") + "/webhooks.json"
 	values := url.Values{}
-	values.Set("url", "https://"+os.Getenv("APP_URL")+"/webhook/twitter")
+	values.Set("url", os.Getenv("APP_URL")+"/webhook/twitter")
 
 	//Make Oauth Post with parameters
 	resp, _ := httpClient.PostForm(path, values)
@@ -36,4 +36,21 @@ func registerWebhook(){
 		panic(err)
 	}
 	fmt.Println("Webhook id of " + data["id"].(string) + " has been registered")
+	subscribeWebhook()
+}
+
+func subscribeWebhook(){
+	fmt.Println("Subscribing webapp...")
+	client := CreateClient()
+	path := "https://api.twitter.com/1.1/account_activity/all/" + os.Getenv("WEBHOOK_ENV") + "/subscriptions.json"
+	resp, _ := client.PostForm(path, nil)
+	body, _ := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	//If response code is 204 it was successful
+	if resp.StatusCode == 204 {
+		fmt.Println("Subscribed successfully")
+	} else if resp.StatusCode!= 204 {
+		fmt.Println("Could not subscribe the webhook. Response below:")
+		fmt.Println(string(body))
+	}
 }
